@@ -16,6 +16,8 @@ Setting up the environment
 7. Type below command and go to the url prompted `docker logs --tail 50 adsi_ast2`
 8. Now you are ready to experiment with the notebooks
 
+Note: Due to the data quota, this repo only contains the model used in deployment
+
 Use the deployed model directly
 ------------
 1. Go to https://adsi-ast2-14007025.herokuapp.com/docs/
