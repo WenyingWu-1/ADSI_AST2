@@ -1,7 +1,26 @@
-AST2
+Beer_type Prediction Project 
 ==============================
 
+Neural Network Deployment Project on Heroku
+
 Author: Wenying Wu 14007025
+
+Setting up the environment
+------------
+1. Clone this repository
+2. Read the Final Report in the /reports folder
+3. Download raw dataset to /data/raw folder 
+4. Install Docker, Git and Heroku in your machine if you havn't
+5. Open a terminal in your directory and build the docker image using Dockerfile `docker build -t adsi_ast2:latest .`
+6. Run the docker container `docker run  -dit --rm --name adsi_ast2 -p 8888:8888 -e JUPYTER_ENABLE_LAB=yes -v /${PWD}:/home/jovyan/work adsi_ast2:latest`
+7. Type below command and go to the url prompted `docker logs --tail 50 adsi_ast2`
+8. Now you are ready to experiment with the notebooks
+
+Use the deployed model directly
+------------
+1. Go to https://adsi-ast2-14007025.herokuapp.com/docs/
+2. Read the Final Report in the /reports folder for brief instruction or Fast API & Heroku Deployment.ipynb in /notebook folder for detailed instruction
+
 
 Project Organization
 ------------

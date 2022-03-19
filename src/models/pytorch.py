@@ -337,8 +337,9 @@ class PytorchMultiClass(nn.Module):
         x = F.dropout(F.relu(self.layer_1(x)), training=self.training)
         x = self.layer_out(x)
         return self.softmax(x)
-    
-def train_classification(train_data, model, criterion, optimizer, batch_size, device, scheduler=None, generate_batch=None):
+
+# Modified for visualization    
+def train_classification(train_data, model, criterion, optimizer, batch_size, device, accuracy_stats, loss_stats, scheduler=None, generate_batch=None, sampler=None, shuffle=True):
     """Train a Pytorch multi-class classification model
 
     Parameters
@@ -374,7 +375,7 @@ def train_classification(train_data, model, criterion, optimizer, batch_size, de
     train_acc = 0
     
     # Create data loader
-    data = DataLoader(train_data, batch_size=batch_size, shuffle=True, collate_fn=generate_batch)
+    data = DataLoader(train_data, batch_size=batch_size, shuffle=False, collate_fn=generate_batch, sampler=sampler)
     
     # Iterate through data by batch of observations
     for feature, target_class in data:
@@ -407,9 +408,12 @@ def train_classification(train_data, model, criterion, optimizer, batch_size, de
     if scheduler:
         scheduler.step()
 
+    # Update stats dictionaries 
+    loss_stats['train'].append(train_loss / len(train_data))
+    accuracy_stats['train'].append(train_acc / len(train_data))
     return train_loss / len(train_data), train_acc / len(train_data)
 
-def test_classification(test_data, model, criterion, batch_size, device, generate_batch=None):
+def test_classification(test_data, model, criterion, batch_size, device, accuracy_stats, loss_stats, generate_batch=None):
     """Calculate performance of a Pytorch multi-class classification model
 
     Parameters
@@ -439,6 +443,7 @@ def test_classification(test_data, model, criterion, batch_size, device, generat
     model.eval()
     test_loss = 0
     test_acc = 0
+    y_pred_list = []
     
     # Create data loader
     data = DataLoader(test_data, batch_size=batch_size, collate_fn=generate_batch)
@@ -463,5 +468,42 @@ def test_classification(test_data, model, criterion, batch_size, device, generat
             
             # Calculate global accuracy
             test_acc += (output.argmax(1) == target_class).sum().item()
+            
+            # Append output to y_pred_list
+            _, y_pred_tags = torch.max(output, dim = 1)
+            y_pred_list.append(y_pred_tags.cpu().numpy())
+    
+    # Update stats dictionaries 
+    loss_stats['train'].append(test_loss / len(test_data))
+    accuracy_stats['train'].append(test_acc / len(test_data))
+    
+    # Format y_pred_list
+    y_pred_list = [a.squeeze().tolist() for a in y_pred_list]
+    
+    return test_loss / len(test_data), test_acc / len(test_data), y_pred_list
 
-    return test_loss / len(test_data), test_acc / len(test_data)
+
+class ClassifierDataset(Dataset):
+    
+    def __init__(self, X_data, y_data):
+        self.X_data = X_data
+        self.y_data = y_data
+        
+    def __getitem__(self, index):
+        return self.X_data[index], self.y_data[index]
+        
+    def __len__ (self):
+        return len(self.X_data)
+    
+
+
+def multi_acc(y_pred, y_test):
+    y_pred_softmax = torch.log_softmax(y_pred, dim = 1)
+    _, y_pred_tags = torch.max(y_pred_softmax, dim = 1)    
+    
+    correct_pred = (y_pred_tags == y_test).float()
+    acc = correct_pred.sum() / len(correct_pred)
+    
+    acc = torch.round(acc * 100)
+    
+    return acc
